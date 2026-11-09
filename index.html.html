@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Roadbed Sensor Simulation</title>
+<style>
+:root{--bg:#f5f5f7;--card:#fff;--tx:#1d1d1f;--mu:#6e6e73;--ln:#e8e8ed;--bl:#0071e3;--or:#ff9f0a;--rd:#ff3b30;--gn:#30a46c;--font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI Variable Display","Segoe UI",Inter,system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:400 15px/1.47 var(--font);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1160px;margin:0 auto;padding:56px 28px 64px}
+header{margin-bottom:44px}
+header p.k{margin:0 0 6px;color:var(--mu);font-size:15px}
+header h1{margin:0;font-size:48px;line-height:1.08;font-weight:600;letter-spacing:-.025em}
+header p.s{margin:14px 0 0;max-width:640px;color:var(--mu);font-size:19px;line-height:1.42}
+header .meta{margin-top:18px;color:var(--mu);font-size:13px}header .meta a{color:var(--bl);text-decoration:none}
+h2{margin:0 0 4px;font-size:24px;font-weight:600;letter-spacing:-.015em}
+.sub{margin:0 0 18px;color:var(--mu);font-size:14px}
+section{margin-top:56px}
+.card{background:var(--card);border-radius:22px;padding:28px;min-width:0}
+.g2{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.g22{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px}
+svg text{font-family:var(--font)}
+.bx{fill:#fff;stroke:#c7c7cc;stroke-width:1.2}.bx.fb{stroke:var(--or)}.bx.ac{fill:#f0f7ff;stroke:var(--bl)}
+.bt{fill:var(--tx);font-size:13px;font-weight:600;text-anchor:middle}.bs{fill:var(--mu);font-size:11px;text-anchor:middle}
+.ln{fill:none;stroke:#8e8e93;stroke-width:1.5}.ln.fb{stroke:var(--or);stroke-dasharray:5 4}
+.ctl{display:grid;gap:4px}
+.ctl .r{display:grid;grid-template-columns:1fr auto;align-items:baseline;padding-top:14px}
+.ctl .r:first-child{padding-top:0}
+.ctl b{font-weight:500}.ctl output{color:var(--mu);font-variant-numeric:tabular-nums}
+.ctl small{display:block;color:var(--mu);font-size:12.5px;margin-top:1px}
+.ctl .r.hl b,.ctl .r.hl output{color:var(--bl)}
+input[type=range]{grid-column:1/-1;width:100%;height:4px;margin:10px 0 2px;appearance:none;-webkit-appearance:none;background:#d2d2d7;border-radius:2px;outline:0;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 4px #0003,0 0 0 .5px #0002}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:0;box-shadow:0 1px 4px #0003}
+.facts{margin:20px 0 0;padding-top:16px;border-top:1px solid var(--ln);color:var(--mu);font-size:13px;display:grid;gap:3px}.facts b{color:var(--tx);font-weight:500}
+.pill{display:inline-block;margin-top:18px;border:0;background:var(--bl);color:#fff;font:inherit;font-weight:500;padding:9px 20px;border-radius:980px;cursor:pointer}.pill:hover{background:#0077ed}
+.ch h3{margin:0;font-size:17px;font-weight:600}.ch .t{margin:2px 0 14px;color:var(--mu);font-size:13px}
+canvas{width:100%;height:290px;display:block}
+.big{display:flex;align-items:baseline;gap:8px;margin-top:12px;padding-top:14px;border-top:1px solid var(--ln)}
+.big .n{font-size:44px;font-weight:600;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}.big .u{color:var(--mu)}
+.big .v{margin-left:auto;font-size:14px;font-weight:500}
+.leg{display:flex;gap:20px;flex-wrap:wrap;margin:18px 2px 0;color:var(--mu);font-size:13px}
+.leg i{display:inline-block;width:16px;height:2px;vertical-align:middle;margin-right:7px;border-radius:1px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{padding:12px 0;text-align:right;border-bottom:1px solid var(--ln)}tr:last-child td{border-bottom:0}
+th{color:var(--mu);font-weight:500;font-size:13px;padding-top:0}th:first-child,td:first-child{text-align:left}td:first-child{color:var(--mu)}td{font-weight:500}
+td.bad{color:var(--rd)}
+.obs p{margin:0 0 14px;color:var(--tx)}.obs p:last-child{margin:0}.obs b{font-weight:600}
+footer{margin-top:48px;color:var(--mu);font-size:12.5px;max-width:760px}
+@media(max-width:960px){.g2,.g3,.g22{grid-template-columns:minmax(0,1fr)}header h1{font-size:36px}}
+</style></head><body>
+<div class="wrap">
+<header>
+<p class="k">CpE305 · Feedback and Control Systems</p>
+<h1>Counting vehicles with a<br>magnetic sensor in the road.</h1>
+<p class="s">A simplified simulation of the vehicle detector in Knaian (2000): a baseline, a threshold with hysteresis, and a state machine. We change one parameter and compare.</p>
+<p class="meta"><span id="who"></span> · <a href="https://dspace.mit.edu/entities/publication/84374c2f-df6e-4eec-aa24-5b440f6e3d9f" target="_blank" rel="noopener">Read the thesis</a></p>
+</header>
+
+<section style="margin-top:0">
+<h2>The loop</h2><p class="sub">Input, controller, process and output, with feedback. The published sensor only reports, so the baseline feedback is added for the simulation.</p>
+<div class="card"><svg id="bd" viewBox="0 0 900 270" style="width:100%;height:auto;display:block">
+<defs><marker id="mk1" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M1,1L9,5L1,9z" fill="#8e8e93"/></marker><marker id="mk2" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M1,1L9,5L1,9z" fill="#ff9f0a"/></marker></defs>
+<rect class="bx fb" x="10" y="36" width="150" height="66" rx="14"/><text class="bt" x="85" y="64">Reference</text><text class="bs" x="85" y="82">Baseline b(t)</text>
+<circle class="bx" cx="226" cy="69" r="20"/><text class="bt" x="226" y="75" style="font-size:18px;font-weight:400">Σ</text>
+<rect class="bx ac" x="296" y="36" width="210" height="66" rx="14"/><text class="bt" x="401" y="62">Controller</text><text class="bs" x="401" y="79">MSP430 · threshold, hysteresis,</text><text class="bs" x="401" y="92">state machine</text>
+<rect class="bx" x="566" y="36" width="130" height="66" rx="14"/><text class="bt" x="631" y="64">Output</text><text class="bs" x="631" y="82">Vehicle count</text>
+<rect class="bx" x="756" y="36" width="134" height="66" rx="14"/><text class="bt" x="823" y="64">Base station</text><text class="bs" x="823" y="82">Radio link</text>
+<rect class="bx" x="100" y="176" width="210" height="66" rx="14"/><text class="bt" x="205" y="204">Sensor</text><text class="bs" x="205" y="222">HMC1021S magnetometer · x(t)</text>
+<rect class="bx" x="440" y="176" width="220" height="66" rx="14"/><text class="bt" x="550" y="204">Process</text><text class="bs" x="550" y="222">Road and passing vehicles</text>
+<g class="ln" marker-end="url(#mk1)"><path d="M160 69H204"/><path d="M247 69H296"/><path d="M506 69H566"/><path d="M696 69H756"/><path d="M440 209H310"/><path d="M226 176V92"/><path d="M760 209H660"/></g>
+<path class="ln fb" marker-end="url(#mk2)" d="M100 209H50V102"/>
+<text class="bs" x="216" y="128" style="text-anchor:end">x(t)</text>
+<text class="bs" x="206" y="64" style="text-anchor:middle">−</text><text class="bs" x="240" y="108">+</text>
+<text class="bs" x="401" y="122">e(t) = |x(t) − b(t)|</text>
+<text x="62" y="140" fill="#ff9f0a" font-size="12" font-weight="600">Feedback</text><text x="62" y="156" fill="#6e6e73" font-size="11.5">Baseline updates</text><text x="62" y="170" fill="#6e6e73" font-size="11.5">only when idle</text>
+<text class="bs" x="800" y="228">Vehicle (disturbance)</text>
+</svg></div>
+</section>
+
+<section>
+<h2>Parameters</h2><p class="sub">Condition 1 uses the original threshold. Condition 2 changes only the threshold. Everything else is shared.</p>
+<div class="g2">
+<div class="card"><div class="ctl">
+<div class="r"><div><b>Threshold, condition 1</b><small>Original turn-on level</small></div><output></output><input type="range" id="t1" min=".5" max="2" step=".05" value="1"></div>
+<div class="r hl"><div><b>Threshold, condition 2</b><small>The one parameter we modify</small></div><output></output><input type="range" id="t2" min=".5" max="2" step=".05" value="1.3"></div>
+<div class="r"><div><b>Hysteresis ratio</b><small>Reset level is this fraction of the threshold</small></div><output></output><input type="range" id="h" min=".3" max=".95" step=".05" value=".5"></div>
+<div class="r"><div><b>Baseline filter</b><small>How fast the baseline follows the field</small></div><output></output><input type="range" id="a" min=".005" max=".1" step=".005" value=".02"></div>
+<div class="r"><div><b>Sensor noise</b><small>Standard deviation of the measurement</small></div><output></output><input type="range" id="n" min="0" max=".2" step=".01" value="0.05"></div>
+<div class="r"><div><b>Baseline drift</b><small>Slow shift of the field over the run</small></div><output></output><input type="range" id="d" min="0" max="2.5" step=".1" value="1.2"></div>
+</div></div>
+<div class="card"><h3 style="margin:0 0 12px;font-size:17px;font-weight:600">Setup</h3>
+<div class="facts" style="margin:0;padding:0;border:0;gap:10px">
+<span><b>Run</b><br>600 samples at 0.1 s, so 60 seconds.</span>
+<span><b>Real vehicles</b><br>Three: a car, a long truck with two magnetic humps, and a weak small vehicle.</span>
+<span><b>Counting rule</b><br>One vehicle is counted each time the state returns from vehicle to idle.</span>
+<span><b>Extra run</b><br>Baseline feedback turned off, to show what the loop is for.</span></div>
+<button class="pill" id="run">Replay</button></div>
+</div>
+</section>
+
+<section>
+<h2>Results</h2><p class="sub">Error is the distance between the measured field and the baseline. A vehicle is counted when it crosses the threshold and falls back below the reset level.</p>
+<div class="g3" id="scs"></div>
+<div class="leg"><span><i style="background:#8fb8e8"></i>Field x(t)</span><span><i style="background:#ff9f0a"></i>Baseline b(t)</span><span><i style="background:#0071e3;height:3px"></i>Error e(t)</span><span><i style="background:#ff3b30"></i>Threshold</span><span><i style="background:#ffb340;opacity:.7"></i>Reset level</span><span><i style="background:#30a46c;height:8px;border-radius:4px;width:8px"></i>Vehicle counted</span></div>
+</section>
+
+<section>
+<div class="g22">
+<div class="card"><h2 style="font-size:20px">Comparison</h2><p class="sub">Same road, same noise, one changed parameter.</p><table id="tb"></table></div>
+<div class="card obs"><h2 style="font-size:20px">What happened</h2><p class="sub">Summarised from the run above.</p><div id="obs"></div></div>
+</div>
+</section>
+<footer>Simplified model in normalized units, written for a class exercise. It illustrates the control idea and is not the thesis's measured data. Knaian, A. N. (2000). <i>A wireless sensor network for smart roadbeds and intelligent transportation systems</i> [Master's thesis, Massachusetts Institute of Technology].</footer>
+</div>
+<script>
+const N=600,TRUTH=[[70,170],[233,367],[460,560]],H=[[120,22,1.8],[283,14,1.9],[317,14,1.9],[510,20,1.15]];
+function mb(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const RR=mb(7),gz=()=>Math.sqrt(-2*Math.log(RR()+1e-9))*Math.cos(6.2832*RR()),Z=Array.from({length:N},gz);
+function sim(P,k){const T=k==='C2'?P.T2:P.T1,Toff=T*P.h,fb=k!=='X';let b=0,st=0,x=[],bs=[],e=[],S=[],ev=[];
+ for(let t=0;t<N;t++){let v=0;for(const[c,w,a]of H)v+=a*Math.exp(-(((t-c)/w)**2));
+  const xs=v+P.dr*t/N+P.n*Z[t],er=Math.abs(xs-b);
+  if(!st&&er>=T)st=1;else if(st&&er<Toff){st=0;ev.push(t)}
+  if(fb&&!st&&er<Toff)b+=P.a*(xs-b);
+  x.push(xs);bs.push(b);e.push(er);S.push(st)}
+ const hit=TRUTH.map(()=>0);let fa=0;for(const t of ev){const i=TRUTH.findIndex(([a,c])=>t>=a&&t<=c);i<0?fa++:hit[i]++}
+ const det=hit.filter(n=>n>0).length;
+ return{k,T,Toff,x,b:bs,e,S,ev,n:ev.length,det,miss:3-det,extra:hit.reduce((s,n)=>s+Math.max(0,n-1),0)+fa,pk:Math.max(...e)}}
+const STUDENT='Entenia Emmanuel M. · BSCPE 3-A';
+const G=id=>document.getElementById(id),$$=s=>[...document.querySelectorAll(s)];
+G('who').textContent=STUDENT;
+const ids=['t1','t2','h','a','n','d'],KEY=['T1','T2','h','a','n','dr'];
+const SC=[{k:'C1',n:'Condition 1',s:'Original threshold'},{k:'C2',n:'Condition 2',s:'Modified threshold'},{k:'X',n:'No feedback',s:'Baseline fixed, original threshold'}];
+G('scs').innerHTML=SC.map(s=>`<div class="card ch"><h3>${s.n}</h3><p class="t">${s.s}</p><canvas id="c${s.k}"></canvas><div class="big"><span class="n" id="n${s.k}">0</span><span class="u">of 3 detected</span><span class="v" id="v${s.k}"></span></div></div>`).join('');
+let D=null,P={},ps={p:0,play:false,last:0},raf=0;
+function compute(){ids.forEach((id,i)=>P[KEY[i]]=+G(id).value);
+ $$('.ctl output').forEach(o=>{const i=o.parentNode.querySelector('input');o.textContent=(+i.value).toFixed(i.id==='a'?3:2)});
+ D={C1:sim(P,'C1'),C2:sim(P,'C2'),X:sim(P,'X')};
+ const a=D.C1,b=D.C2,x=D.X,c=(v,w)=>`<td class="${w?'bad':''}">${v}</td>`;
+ const rows=[['Threshold',q=>q.T.toFixed(2)],['Reset level',q=>q.Toff.toFixed(2)],['Vehicles counted',q=>q.n,q=>q.n!==3],['Real vehicles detected',q=>q.det+' of 3',q=>q.det!==3],['Missed',q=>q.miss,q=>q.miss>0],['Extra counts',q=>q.extra,q=>q.extra>0],['Peak error',q=>q.pk.toFixed(2)],['Baseline feedback',q=>q.k==='X'?'Off':'On']];
+ G('tb').innerHTML=`<tr><th></th><th>Condition 1</th><th>Condition 2</th><th>No feedback</th></tr>`+rows.map(([n,f,w])=>`<tr><td>${n}</td>${[a,b,x].map(q=>c(f(q),w&&w(q))).join('')}</tr>`).join('');
+ G('obs').innerHTML=[
+ `<b>Condition 1.</b> With a threshold of ${a.T.toFixed(2)} the detector counted ${a.n} of 3 vehicles${a.miss?', missing '+a.miss:' and missed none'}${a.extra?', with '+a.extra+' extra':''}.`,
+ `<b>Condition 2.</b> Raising the threshold to ${b.T.toFixed(2)} gave ${b.n} of 3. ${b.miss?'The weakest vehicle never crosses the higher threshold, so it goes uncounted. A higher threshold is less sensitive to small disturbances.':'Nothing was missed at this setting.'}`,
+ `<b>No feedback.</b> With the baseline frozen, drift pushes the error above the reset level and the state machine stays in vehicle. It counted ${x.n} of 3.`,
+ `<b>Takeaway.</b> The threshold trades sensitivity against noise rejection, and the baseline feedback is what keeps a fixed threshold meaningful as the field drifts.`].map(t=>`<p>${t}</p>`).join('')}
+function fit(cv){const r=cv.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);if(cv.width!==Math.round(r.width*d)||cv.height!==Math.round(r.height*d)){cv.width=Math.round(r.width*d);cv.height=Math.round(r.height*d)}const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return[g,r.width,r.height]}
+const FONT='11px -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif';
+function scope(k){const cv=G('c'+k),[g,W,H]=fit(cv),r=D[k],p=ps.p,i=Math.min(N-1,p|0);
+ const LM=30,RM=4,TM=4,BM=20,GP=16,h=(H-TM-BM-GP)/2,t1=TM,t2=TM+h+GP,X=t=>LM+t/N*(W-LM-RM);
+ const xs=['C1','C2','X'].flatMap(q=>D[q].x),lo1=Math.min(-.3,Math.min(...xs)-.1),hi1=Math.max(...xs)+.1,emax=Math.max(...['C1','C2','X'].map(q=>D[q].pk),P.T2)+.2;
+ const y1=v=>t1+h*(1-(v-lo1)/(hi1-lo1)),y2=v=>t2+h*(1-v/emax);
+ g.clearRect(0,0,W,H);g.font=FONT;
+ for(const[top,lo,hi,y,lab]of[[t1,lo1,hi1,y1,'Field'],[t2,0,emax,y2,'Error']]){
+  g.fillStyle='#34c75912';for(const[a,b]of TRUTH)g.fillRect(X(a),top,X(b)-X(a),h);
+  g.strokeStyle='#ececf0';g.lineWidth=1;g.fillStyle='#8e8e93';g.textAlign='right';
+  for(let q=0;q<=2;q++){const v=lo+(hi-lo)*q/2;g.beginPath();g.moveTo(LM,Math.round(y(v))+.5);g.lineTo(W-RM,Math.round(y(v))+.5);g.stroke();g.fillText(v.toFixed(1),LM-6,y(v)+3.5)}
+  g.textAlign='left';g.fillStyle='#6e6e73';g.fillText(lab,LM+6,top+13)}
+ g.textAlign='center';g.fillStyle='#8e8e93';for(let s=0;s<=60;s+=20)g.fillText(s+' s',Math.min(Math.max(X(s*10),LM+8),W-RM-10),H-5);
+ g.lineWidth=1;g.setLineDash([4,4]);g.strokeStyle='#ff3b30';g.beginPath();g.moveTo(LM,y2(r.T));g.lineTo(W-RM,y2(r.T));g.stroke();
+ g.strokeStyle='#ffb340';g.beginPath();g.moveTo(LM,y2(r.Toff));g.lineTo(W-RM,y2(r.Toff));g.stroke();g.setLineDash([]);
+ g.textAlign='right';g.fillStyle='#ff3b30';g.fillText(r.T.toFixed(2),W-RM-2,y2(r.T)-4);g.fillStyle='#e08600';g.fillText(r.Toff.toFixed(2),W-RM-2,y2(r.Toff)+12);
+ const tr=(arr,y,c,w,dash)=>{g.save();g.beginPath();g.rect(LM,0,W-LM-RM,H);g.clip();g.strokeStyle=c;g.lineWidth=w;g.lineJoin='round';g.setLineDash(dash||[]);g.beginPath();for(let j=0;j<=i;j++)g[j?'lineTo':'moveTo'](X(j),y(arr[j]));g.stroke();g.restore()};
+ tr(r.x,y1,'#8fb8e8',1.4);tr(r.b,y1,'#ff9f0a',1.8,[5,3]);tr(r.e,y2,'#0071e3',2);
+ let c=0;g.fillStyle='#30a46c';for(const t of r.ev){if(t<=p){c++;g.beginPath();g.arc(X(t),y2(0)-8,4.5,0,7);g.fill()}}
+ G('n'+k).textContent=c;const V=G('v'+k);
+ if(p>=N-2){const bad=r.miss||r.extra;V.textContent=bad?(r.miss?r.miss+' missed':'')+(r.miss&&r.extra?', ':'')+(r.extra?r.extra+' extra':''):'All detected';V.style.color=bad?'#ff3b30':'#30a46c'}else{V.textContent='';}}
+function drawAll(){if(!D)return;SC.forEach(s=>scope(s.k))}
+function tick(ts){if(ps.play){ps.p=Math.min(N-1,ps.p+Math.min(ts-ps.last,100)/1000*150);ps.last=ts;if(ps.p>=N-1)ps.play=false}drawAll();raf=ps.play?requestAnimationFrame(tick):0}
+function run(){ps.p=0;ps.play=true;ps.last=performance.now();if(!raf)raf=requestAnimationFrame(tick)}
+G('run').onclick=run;
+let tm;ids.forEach(i=>G(i).oninput=()=>{clearTimeout(tm);tm=setTimeout(()=>{compute();run()},80)});
+addEventListener('resize',drawAll);compute();matchMedia('(prefers-reduced-motion:reduce)').matches?(ps.p=N-1,drawAll()):run();
+</script></body></html>
